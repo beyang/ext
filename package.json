@@ -11,14 +11,19 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "*"
     ],
     "main": "./out/src/extension",
     "contributes": {
         "commands": [{
-            "command": "extension.sayHello",
-            "title": "Hello World"
-        }]
+            "command": "beyang.printf",
+            "title": "printf"
+        }],
+        "keybindings": {
+            "command": "beyang.printf",
+            "key": "ctrl+c ctrl+c",
+            "when": "editorTextFocus"
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",

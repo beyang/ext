@@ -1,29 +1,56 @@
 'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+
 import * as vscode from 'vscode';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "beyang" is now active!');
-
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-        // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
-
-    context.subscriptions.push(disposable);
+    context.subscriptions.push(vscode.commands.registerCommand('beyang.printf', printf));
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {
+/**
+ * Injects a printf debugging statement
+ */
+async function printf() {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed) {
+        return;
+    }
+
+    const sentinel = nearestPreviousNonEmptyLine(ed, ed.selection.active.line - 1);
+
+    const { line, startBuffer, endBuffer } = commentLineAndSelection(ed.document.languageId, sentinel);
+    await ed.edit(eb => {
+        eb.insert(ed.selection.active, line);
+    });
+    ed.selection = new vscode.Selection(
+        new vscode.Position(ed.selection.active.line, ed.selection.active.character - line.length + startBuffer),
+        new vscode.Position(ed.selection.active.line, ed.selection.active.character - endBuffer),
+    );
+}
+
+function nearestPreviousNonEmptyLine(ed: vscode.TextEditor, startLine: number): string {
+    for (let l = startLine; l >= 0; l--) {
+        const line = ed.document.getText(new vscode.Range(l, 0, l + 1, 0)).replace(/\n/g, ' ').trim();
+        if (line.length > 0) {
+            return line
+        }
+    }
+    return '';
+}
+
+function commentLineAndSelection(lang: string, placeholder: string): {line: string, startBuffer: number, endBuffer: number} {
+    // Clean up placeholder
+    placeholder = placeholder.trim();
+    if (placeholder.endsWith('{') || placeholder.endsWith('[') || placeholder.endsWith('(')) {
+        placeholder = placeholder.slice(0, placeholder.length - 1).trim();
+    }
+
+    switch (lang) {
+        case 'go':
+            return { line: `log.Printf("# ${placeholder}")`, startBuffer: 'log.Printf("# '.length, endBuffer: 2 };
+        case 'javascript':
+        case 'typescript':
+            return { line: `console.error('# ${placeholder}')`, startBuffer: 'console.error(\'# '.length, endBuffer: 2 };
+        default:
+            return { line: `no printf syntax found for language ${lang}`, startBuffer: 0, endBuffer: 0 };
+    }
 }
