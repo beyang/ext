@@ -3,7 +3,7 @@
     "displayName": "beyang",
     "description": "Beyang's personal extension",
     "version": "0.0.1",
-    "publisher": "@beyang",
+    "publisher": "beyang",
     "engines": {
         "vscode": "^1.16.0"
     },
